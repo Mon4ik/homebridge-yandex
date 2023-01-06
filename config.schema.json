@@ -1,16 +1,40 @@
 {
-  "pluginAlias": "ExampleHomebridgePlugin",
-  "pluginType": "platform",
-  "singular": true,
-  "schema": {
-    "type": "object",
-    "properties": {
-      "name": {
-        "title": "Name",
-        "type": "string",
-        "required": true,
-        "default": "Example Dynamic Platform"
-      }
+    "pluginAlias": "HomebridgeYandex",
+    "pluginType": "platform",
+    "singular": true,
+    "schema": {
+        "type": "object",
+        "properties": {
+            "name": {
+                "title": "Name",
+                "type": "string",
+                "required": true,
+                "default": "Yandex SmartHome"
+            },
+            "interval": {
+                "title": "API Interval",
+                "description": "Interval in ms",
+                "type": "number",
+                "default": 20000,
+                "required": true
+            },
+            "client": {
+                "title": "Authorization",
+                "type": "object",
+                "required": true,
+                "properties": {
+                    "id": {
+                        "title": "Client ID",
+                        "type": "string",
+                        "required": true
+                    },
+                    "secret": {
+                        "title": "Client Secret",
+                        "type": "string",
+                        "required": true
+                    }
+                }
+            }
+        }
     }
-  }
 }

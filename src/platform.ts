@@ -1,116 +1,302 @@
-import { API, DynamicPlatformPlugin, Logger, PlatformAccessory, PlatformConfig, Service, Characteristic } from 'homebridge';
+import http, { IncomingMessage, Server, ServerResponse } from "http"
+import axios from "axios"
 
-import { PLATFORM_NAME, PLUGIN_NAME } from './settings';
-import { ExamplePlatformAccessory } from './platformAccessory';
+const FormData = require("form-data")
 
-/**
- * HomebridgePlatform
- * This class is the main constructor for your plugin, this is where you should
- * parse the user config and discover/register accessories with Homebridge.
- */
-export class ExampleHomebridgePlatform implements DynamicPlatformPlugin {
-  public readonly Service: typeof Service = this.api.hap.Service;
-  public readonly Characteristic: typeof Characteristic = this.api.hap.Characteristic;
+import path from "path"
+import fs from "fs"
 
-  // this is used to track restored cached accessories
-  public readonly accessories: PlatformAccessory[] = [];
+import {
+    API,
+    APIEvent,
+    Categories,
+    CharacteristicEventTypes,
+    CharacteristicSetCallback,
+    CharacteristicValue,
+    DynamicPlatformPlugin,
+    HAP,
+    Logging,
+    PlatformAccessory,
+    PlatformAccessoryEvent,
+    PlatformConfig,
+} from "homebridge"
 
-  constructor(
-    public readonly log: Logger,
-    public readonly config: PlatformConfig,
-    public readonly api: API,
-  ) {
-    this.log.debug('Finished initializing platform:', this.config.name);
+import { PLUGIN_NAME, PLATFORM_NAME } from "./settings"
+import { Device, YandexRequest, YandexRequestOK } from "./types"
+import { CapabilityManager } from "./capabilities"
 
-    // When this event is fired it means Homebridge has restored all cached accessories from disk.
-    // Dynamic Platform plugins should only register new accessories after this event was fired,
-    // in order to ensure they weren't added to homebridge already. This event can also be used
-    // to start discovery of new accessories.
-    this.api.on('didFinishLaunching', () => {
-      log.debug('Executed didFinishLaunching callback');
-      // run the method to discover / register your devices as accessories
-      this.discoverDevices();
-    });
-  }
+function sleep(ms) {
+    var start = new Date().getTime(),
+        expire = start + ms
+    while (new Date().getTime() < expire) {}
+    return
+}
 
-  /**
-   * This function is invoked when homebridge restores cached accessories from disk at startup.
-   * It should be used to setup event handlers for characteristics and update respective values.
-   */
-  configureAccessory(accessory: PlatformAccessory) {
-    this.log.info('Loading accessory from cache:', accessory.displayName);
+export class YandexPlatform implements DynamicPlatformPlugin {
+    readonly log: Logging
+    private readonly api: API
+    private readonly config: PlatformConfig
+    private readonly oauth_path: string
 
-    // add the restored accessory to the accessories cache so we can track if it has already been registered
-    this.accessories.push(accessory);
-  }
+    private readonly accessories: PlatformAccessory[] = []
 
-  /**
-   * This is an example method showing how to register discovered accessories.
-   * Accessories must only be registered once, previously created accessories
-   * must not be registered again to prevent "duplicate UUID" errors.
-   */
-  discoverDevices() {
+    constructor(log: Logging, config: PlatformConfig, api: API) {
+        this.log = log
+        this.api = api
+        this.config = config
 
-    // EXAMPLE ONLY
-    // A real plugin you would discover accessories from the local network, cloud services
-    // or a user-defined array in the platform config.
-    const exampleDevices = [
-      {
-        exampleUniqueId: 'ABCD',
-        exampleDisplayName: 'Bedroom',
-      },
-      {
-        exampleUniqueId: 'EFGH',
-        exampleDisplayName: 'Kitchen',
-      },
-    ];
+        this.oauth_path = path.join(
+            this.api.user.storagePath(),
+            "yandex_oauth.json"
+        )
 
-    // loop over the discovered devices and register each one if it has not already been registered
-    for (const device of exampleDevices) {
+        log.info("Example platform finished initializing!")
 
-      // generate a unique id for the accessory this should be generated from
-      // something globally unique, but constant, for example, the device serial
-      // number or MAC address
-      const uuid = this.api.hap.uuid.generate(device.exampleUniqueId);
-
-      // see if an accessory with the same uuid has already been registered and restored from
-      // the cached devices we stored in the `configureAccessory` method above
-      const existingAccessory = this.accessories.find(accessory => accessory.UUID === uuid);
-
-      if (existingAccessory) {
-        // the accessory already exists
-        this.log.info('Restoring existing accessory from cache:', existingAccessory.displayName);
-
-        // if you need to update the accessory.context then you should run `api.updatePlatformAccessories`. eg.:
-        // existingAccessory.context.device = device;
-        // this.api.updatePlatformAccessories([existingAccessory]);
-
-        // create the accessory handler for the restored accessory
-        // this is imported from `platformAccessory.ts`
-        new ExamplePlatformAccessory(this, existingAccessory);
-
-        // it is possible to remove platform accessories at any time using `api.unregisterPlatformAccessories`, eg.:
-        // remove platform accessories when no longer present
-        // this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [existingAccessory]);
-        // this.log.info('Removing existing accessory from cache:', existingAccessory.displayName);
-      } else {
-        // the accessory does not yet exist, so we need to create it
-        this.log.info('Adding new accessory:', device.exampleDisplayName);
-
-        // create a new accessory
-        const accessory = new this.api.platformAccessory(device.exampleDisplayName, uuid);
-
-        // store a copy of the device object in the `accessory.context`
-        // the `context` property can be used to store any data about the accessory you may need
-        accessory.context.device = device;
-
-        // create the accessory handler for the newly create accessory
-        // this is imported from `platformAccessory.ts`
-        new ExamplePlatformAccessory(this, accessory);
-
-        // link the accessory to your platform
-        this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
-      }
+        /*
+         * When this event is fired, homebridge restored all cached accessories from disk and did call their respective
+         * `configureAccessory` method for all of them. Dynamic Platform plugins should only register new accessories
+         * after this event was fired, in order to ensure they weren't added to homebridge already.
+         * This event can also be used to start discovery of new accessories.
+         */
+        api.on(APIEvent.DID_FINISH_LAUNCHING, () => {
+            this.createYandexAgent()
+        })
     }
-  }
+
+    /*
+     * This function is invoked when homebridge restores cached accessories from disk at startup.
+     * It should be used to setup event handlers for characteristics and update respective values.
+     */
+    async configureAccessory(accessory: PlatformAccessory): Promise<void> {
+        const oauth_content = JSON.parse(
+            fs.readFileSync(this.oauth_path).toString("utf-8")
+        )
+
+        this.log("Configuring accessory %s", accessory.displayName)
+
+        const device = await this.getDevice(accessory.UUID)
+
+        if (device) {
+            const cap = new CapabilityManager(this, this.api, accessory, device)
+        }
+
+        accessory.on(PlatformAccessoryEvent.IDENTIFY, () => {
+            this.log("%s identified!", accessory.displayName)
+        })
+
+        this.accessories.push(accessory)
+    }
+
+    // --------------------------- CUSTOM METHODS ---------------------------
+
+    async getDevice(id: string): Promise<YandexRequestOK<Device> | undefined> {
+        const oauth_content = JSON.parse(
+            fs.readFileSync(this.oauth_path).toString("utf-8")
+        )
+
+        const device_info_res = await axios<YandexRequest<Device>>({
+            url: `https://api.iot.yandex.net/v1.0/devices/${id}`,
+            headers: {
+                Authorization: `Bearer ${oauth_content.access_token}`,
+            },
+        })
+
+        if (device_info_res.data.status === "ok") {
+            return device_info_res.data
+        }
+    }
+
+    addAccessory(name: string) {
+        this.log.info("Adding new accessory with name %s", name)
+
+        // uuid must be generated from a unique but not changing data source, name should not be used in the most cases. But works in this specific example.
+        const uuid = this.api.hap.uuid.generate(name)
+        const accessory = new this.api.platformAccessory(name, uuid)
+
+        accessory.addService(this.api.hap.Service.Lightbulb, "Test Light")
+
+        this.configureAccessory(accessory) // abusing the configureAccessory here
+
+        this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [
+            accessory,
+        ])
+    }
+
+    removeAccessories() {
+        // we don't have any special identifiers, we just remove all our accessories
+
+        this.log.info("Removing all accessories")
+
+        this.api.unregisterPlatformAccessories(
+            PLUGIN_NAME,
+            PLATFORM_NAME,
+            this.accessories
+        )
+        this.accessories.splice(0, this.accessories.length) // clear out the array
+    }
+
+    getAccessToken(): string {
+        const oauth_content = JSON.parse(
+            fs.readFileSync(this.oauth_path).toString("utf-8")
+        )
+
+        return oauth_content.access_token
+    }
+
+    async createYandexAgent() {
+        this.log.info(this.oauth_path)
+
+        if (!fs.existsSync(this.oauth_path)) {
+            fs.writeFileSync(
+                this.oauth_path,
+                JSON.stringify({
+                    access_token: "none",
+                    refresh_token: "none",
+                    expires_in: 0,
+                    created_in: 0,
+                }),
+                {
+                    encoding: "utf-8",
+                }
+            )
+        }
+
+        const oauth_content = JSON.parse(
+            fs.readFileSync(this.oauth_path).toString("utf-8")
+        )
+
+        await this.refreshToken(oauth_content.refresh_token)
+
+        setInterval(() => {
+            this.fetchAccessoriesStatuses()
+        }, this.config.interval)
+
+        setInterval(async () => {
+            const oauth_content = JSON.parse(
+                fs.readFileSync(this.oauth_path).toString("utf-8")
+            )
+
+            this.log.info("Refreshing...")
+
+            await this.refreshToken(oauth_content.refresh_token)
+        }, 1000 * 60 * 60 * 8)
+    }
+
+    async fetchAccessoriesStatuses() {
+        const oauth_content = JSON.parse(
+            fs.readFileSync(this.oauth_path).toString("utf-8")
+        )
+
+        const devices_res = await axios({
+            url: "https://api.iot.yandex.net/v1.0/user/info",
+            headers: {
+                Authorization: `Bearer ${oauth_content.access_token}`,
+            },
+        })
+
+        if (devices_res.data.status === "ok") {
+            const devices: Device[] = devices_res.data.devices
+
+            for (const device of devices) {
+                const accessory = this.accessories.find(
+                    (a) => a.UUID === device.id
+                )
+
+                if (!accessory) {
+                    // create new one
+                    const accessory = new this.api.platformAccessory(
+                        device.name,
+                        device.id
+                    )
+
+                    switch (device.type) {
+                        case "devices.types.light":
+                            accessory.addService(
+                                this.api.hap.Service.Lightbulb,
+                                device.name
+                            )
+                            break
+
+                        case "devices.types.socket":
+                            accessory.addService(
+                                this.api.hap.Service.Outlet,
+                                device.name
+                            )
+                            break
+
+                        default:
+                            break
+                    }
+
+                    this.configureAccessory(accessory)
+
+                    this.api.registerPlatformAccessories(
+                        PLUGIN_NAME,
+                        PLATFORM_NAME,
+                        [accessory]
+                    )
+                }
+
+                device.capabilities[0].last_updated
+            }
+        }
+    }
+
+    async refreshToken(refresh_token: string) {
+        const form = new FormData()
+        form.append("grant_type", "refresh_token")
+        form.append("refresh_token", refresh_token)
+        form.append("client_id", this.config.client.id)
+        form.append("client_secret", this.config.client.secret)
+
+        this.log.info("Refreshing...")
+
+        const refresh_res = await axios
+            .post("https://oauth.yandex.ru/token", form, {
+                headers: {
+                    ...form.getHeaders(),
+                },
+            })
+            .catch(
+                ((error) => {
+                    this.log.warn("Refresh token expired")
+                    this.log.warn(
+                        "Go to this link and fetch access, refresh token and etc.:"
+                    )
+                    this.log.warn(
+                        `https://oauth.yandex.ru/authorize?response_type=code&client_id=${this.config.client.id}`
+                    )
+                }).bind(this)
+            )
+
+        if (!refresh_res) {
+            return
+        }
+
+        if (!refresh_res.data.error) {
+            fs.writeFileSync(
+                this.oauth_path,
+                JSON.stringify({
+                    access_token: refresh_res.data.access_token,
+                    refresh_token: refresh_res.data.refresh_token,
+                    expires_in: refresh_res.data.expires_in,
+                    created_in: new Date().getTime() / 1000,
+                })
+            )
+            this.log.info("Successfully refreshed!")
+        }
+    }
+
+    private handleRequest(request: IncomingMessage, response: ServerResponse) {
+        if (request.url === "/add") {
+            this.addAccessory(new Date().toISOString())
+        } else if (request.url === "/remove") {
+            this.removeAccessories()
+        }
+
+        response.writeHead(204) // 204 No content
+        response.end()
+    }
+
+    // ----------------------------------------------------------------------
 }
