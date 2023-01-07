@@ -55,7 +55,9 @@ export class CapabilityManager {
             )
 
             this.yandexPlatform.log.debug(
-                `[${this.device.name}] Setup service ${provider.intent().name}`
+                `[${this.device.name}] Setup characteristic ${
+                    provider.intent().name
+                } for ${service.displayName} service`
             )
 
             service
@@ -66,19 +68,35 @@ export class CapabilityManager {
     }
 
     getService(): Service {
+        let service: Service | undefined
+
         switch (this.device.type) {
             case "devices.types.light":
-                return (
-                    this.accessory.getService(this.api.hap.Service.Lightbulb) ??
-                    this.accessory.addService(this.api.hap.Service.Lightbulb)
+                service = this.accessory.getService(
+                    this.api.hap.Service.Lightbulb
                 )
+
+                if (!service) {
+                    service = this.accessory.addService(
+                        this.api.hap.Service.Lightbulb
+                    )
+                }
+                break
+
             case "devices.types.socket":
-                return (
-                    this.accessory.getService(this.api.hap.Service.Outlet) ??
-                    this.accessory.addService(this.api.hap.Service.Outlet)
-                )
+                service = this.accessory.getService(this.api.hap.Service.Outlet)
+
+                if (!service) {
+                    service = this.accessory.addService(
+                        this.api.hap.Service.Outlet
+                    )
+                }
+                break
+            default:
+                throw Error(`Device "${this.device.name}" isn't supporting`)
+                break
         }
 
-        throw Error(`Device "${this.device.name}" isn't supporting`)
+        return service
     }
 }
