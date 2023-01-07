@@ -62,10 +62,5 @@ export default class Provider extends BaseProvider {
                 Authorization: `Bearer ${token}`,
             },
         })
-
-        console.log(
-            value.toString(),
-            setting_res.data.devices[0].capabilities[0].state
-        )
     }
 }

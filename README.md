@@ -68,7 +68,7 @@ homebridge -D
 ## Todo
 
 - [ ] Better OAuth
-- [ ] Support more than 25% available devices
+- [ ] More devices and capabilities
 - [ ] Go to beta
 - [ ] Go to 1.0.0
 - [ ] Publish to NPM

@@ -1,6 +1,5 @@
 import axios from "axios"
 import { CharacteristicValue, Characteristic } from "homebridge"
-import { YandexPlatform } from "../platform"
 import { BaseProvider, Capability, Device } from "../types"
 
 export function verify(cap: Capability, device: Device) {
@@ -16,8 +15,6 @@ export default class Provider extends BaseProvider {
     }
 
     async get() {
-        console.log("Get")
-
         const device = await this.yandexPlatform.getDevice(this.device.id)
         if (!device) return 140
 
@@ -40,8 +37,6 @@ export default class Provider extends BaseProvider {
     }
 
     async set(value: CharacteristicValue) {
-        console.log("Set")
-
         const token = this.yandexPlatform.getAccessToken()
 
         const cap = this.device.capabilities.find(

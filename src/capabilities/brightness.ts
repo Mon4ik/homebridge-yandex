@@ -1,6 +1,5 @@
 import axios from "axios"
 import { CharacteristicValue, Characteristic } from "homebridge"
-import { YandexPlatform } from "../platform"
 import { BaseProvider, Capability, Device } from "../types"
 
 export function verify(cap: Capability, device: Device) {

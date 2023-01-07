@@ -2,7 +2,7 @@
     "private": true,
     "displayName": "Yandex SmartHome",
     "name": "homebridge-yandex",
-    "version": "0.0.1-2a",
+    "version": "0.0.1",
     "description": "Homebridge plugin for Yandex Home",
     "license": "Apache-2.0",
     "repository": {
