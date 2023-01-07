@@ -1,3 +1,12 @@
+import {
+    Characteristic,
+    CharacteristicGetHandler,
+    CharacteristicSetHandler,
+    CharacteristicValue,
+    WithUUID,
+} from "homebridge"
+import { YandexPlatform } from "platform"
+
 export type YandexRequestOK<T> = {
     status: "ok"
     request_id: string
@@ -50,4 +59,42 @@ export type CapabilityApply = {
             }
         }[]
     }[]
+}
+
+export class BaseProvider implements IProvider {
+    // readonly intent: Characteristic
+    // readonly yandexPlatform: YandexPlatform
+    // readonly device: Device
+
+    constructor(
+        readonly characteristic: any,
+        readonly yandexPlatform: YandexPlatform,
+        readonly device: Device
+    ) {}
+
+    intent(): WithUUID<new () => Characteristic> {
+        return this.characteristic.On
+    }
+
+    async get() {
+        return 0
+    }
+
+    async set(value) {}
+}
+
+export interface IProvider {
+    readonly characteristic: any
+    readonly yandexPlatform: YandexPlatform
+    readonly device: Device
+
+    // constructor(
+    //     intent: Characteristic,
+    //     yandexPlatform: YandexPlatform,
+    //     device: Device
+    // ): void
+
+    intent(): new () => Characteristic
+    get: CharacteristicGetHandler
+    set: CharacteristicSetHandler
 }

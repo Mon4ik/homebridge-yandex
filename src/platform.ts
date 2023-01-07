@@ -23,7 +23,7 @@ import {
 
 import { PLUGIN_NAME, PLATFORM_NAME } from "./settings"
 import { Device, YandexRequest, YandexRequestOK } from "./types"
-import { CapabilityManager } from "./capabilities"
+import { CapabilityManager } from "./capabilities/index"
 
 function sleep(ms) {
     var start = new Date().getTime(),
