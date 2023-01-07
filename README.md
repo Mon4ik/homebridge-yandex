@@ -69,6 +69,5 @@ homebridge -D
 
 - [ ] Better OAuth
 - [ ] More devices and capabilities
-- [ ] Go to beta
 - [ ] Go to 1.0.0
 - [ ] Publish to NPM

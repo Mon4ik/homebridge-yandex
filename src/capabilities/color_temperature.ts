@@ -29,10 +29,14 @@ export default class Provider extends BaseProvider {
         const OldMax = cap.parameters.temperature_k.max
 
         const OldRange = OldMax - OldMin
-        const NewRange = 500 - 140
+        const NewRange = 140 - 500
+
+        this.yandexPlatform.log.debug(
+            `[${this.device.name}] Getting color_temperature (y:${cap.state.value})`
+        )
 
         return Math.round(
-            (((cap.state.value as number) - OldMin) * NewRange) / OldRange + 140
+            (((cap.state.value as number) - OldMin) * NewRange) / OldRange + 500
         )
     }
 
@@ -53,6 +57,10 @@ export default class Provider extends BaseProvider {
         const NewRange = NewMax - NewMin
         const NewValue = Math.round(
             ((parseInt(value.toString()) - 500) * NewRange) / OldRange + NewMin
+        )
+
+        this.yandexPlatform.log.debug(
+            `[${this.device.name}] Setting color_temperature (hb:${value}, y:${NewValue})`
         )
 
         await axios({

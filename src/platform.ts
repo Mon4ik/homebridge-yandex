@@ -77,7 +77,7 @@ export class YandexPlatform implements DynamicPlatformPlugin {
         const device = await this.getDevice(accessory.UUID)
 
         if (device) {
-            const cap = new CapabilityManager(this, this.api, accessory, device)
+            new CapabilityManager(this, this.api, accessory, device)
         }
 
         accessory.on(PlatformAccessoryEvent.IDENTIFY, () => {
@@ -285,17 +285,6 @@ export class YandexPlatform implements DynamicPlatformPlugin {
             )
             this.log.info("Successfully refreshed!")
         }
-    }
-
-    private handleRequest(request: IncomingMessage, response: ServerResponse) {
-        if (request.url === "/add") {
-            this.addAccessory(new Date().toISOString())
-        } else if (request.url === "/remove") {
-            this.removeAccessories()
-        }
-
-        response.writeHead(204) // 204 No content
-        response.end()
     }
 
     // ----------------------------------------------------------------------

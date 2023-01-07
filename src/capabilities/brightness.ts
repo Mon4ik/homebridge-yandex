@@ -25,6 +25,10 @@ export default class Provider extends BaseProvider {
         )
         if (!cap) return 100
 
+        this.yandexPlatform.log.debug(
+            `[${this.device.name}] Getting brightness (${cap.state.value})`
+        )
+
         return Math.round(cap.state.value as number)
     }
 
@@ -39,6 +43,10 @@ export default class Provider extends BaseProvider {
         if (!cap) return
 
         const new_value = Math.round(parseInt(value.toString()))
+
+        this.yandexPlatform.log.debug(
+            `[${this.device.name}] Setting brightness (${new_value})`
+        )
 
         await axios({
             url: "https://api.iot.yandex.net/v1.0/devices/actions",

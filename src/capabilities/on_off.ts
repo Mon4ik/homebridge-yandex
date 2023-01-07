@@ -33,11 +33,19 @@ export default class Provider extends BaseProvider {
         )
         if (!cap) return 0
 
+        this.yandexPlatform.log.debug(
+            `[${this.device.name}] Getting on_off (${cap.state.value})`
+        )
+
         return +cap.state.value
     }
 
     async set(value: CharacteristicValue) {
         const token = await this.yandexPlatform.getAccessToken()
+
+        this.yandexPlatform.log.debug(
+            `[${this.device.name}] Setting on_off (${value})`
+        )
 
         const setting_res = await axios<YandexRequestOK<CapabilityApply>>({
             url: "https://api.iot.yandex.net/v1.0/devices/actions",

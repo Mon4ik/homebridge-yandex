@@ -4,13 +4,7 @@ import { YandexPlatform } from "../platform"
 
 import path from "path"
 
-import {
-    API,
-    Characteristic,
-    CharacteristicValue,
-    PlatformAccessory,
-    Service,
-} from "homebridge"
+import { API, PlatformAccessory, Service } from "homebridge"
 import {
     BaseProvider,
     Capability,
@@ -60,6 +54,10 @@ export class CapabilityManager {
                 device
             )
 
+            this.yandexPlatform.log.debug(
+                `[${this.device.name}] Setup service ${provider.intent().name}`
+            )
+
             service
                 .getCharacteristic(provider.intent())
                 .onGet(provider.get.bind(provider))
@@ -81,6 +79,6 @@ export class CapabilityManager {
                 )
         }
 
-        throw Error(`Accessory "${this.accessory.displayName}" hasn't service`)
+        throw Error(`Device "${this.device.name}" isn't supporting`)
     }
 }
