@@ -1,11 +1,10 @@
-
 <p align="center">
 
 <img src="https://github.com/homebridge/branding/raw/master/logos/homebridge-wordmark-logo-vertical.png" width="150">
 
 </p>
 
-> Plugin is in ALPHA, so it works bad
+> Plugin is in ALPHA, so it works very bad
 
 # Homebridge Yandex
 
@@ -18,29 +17,44 @@ Homebridge plugin for Yandex Home
 ## Build
 
 ### Install dependencies
+
 ```
 npm install
 ```
 
 ### Build Plugin
+
 ```
 npm run build
 ```
 
 ### Link To Homebridge
+
 ```
 npm link
 ```
 
-You can now start Homebridge, use the `-D` flag so you can see debug log messages in your plugin:
+### Start Homebridge
 
 ```
 homebridge -D
 ```
 
+## Authorization
+
+1. Create app in Yandex API at [https://oauth.yandex.ru/client/new](https://oauth.yandex.ru/client/new)
+   1. Enter any name
+   2. Select platform `Web services` (first)
+   3. Select all data with IoT (`iot:view`, `iot:control`)
+2. Set redirect URL to: `http://<there's ip>:6767/auth/callback`
+3. Then start Homebridge server and go to url and authorize with your YandexID: `http://<there's ip>:6767/auth`
+
 ## Support list
-- [X] `"devices.types.light"`
-- [X] `"devices.types.socket"`
+
+### Devices:
+
+- [x] `"devices.types.light"`
+- [x] `"devices.types.socket"`
 - [ ] `"devices.types.switch"`
 - [ ] `"devices.types.thermostat"`
 - [ ] `"devices.types.thermostat.ac"`
@@ -65,9 +79,59 @@ homebridge -D
 - [ ] `"devices.types.pet_feeder"`
 - [ ] `"devices.types.other"`
 
+### Capabilities:
+
+- [x] `"devices.capabilities.on_off"`:
+
+  - [x] `on`
+
+- [ ] `"devices.capabilities.color_setting"`:
+
+  - [x] `temperature_k`
+  - [ ] `hsv`
+  - [ ] `rgb`
+  - [ ] `scene`
+
+- [ ] `"devices.capabilities.range"`:
+
+  - [x] `brightness`
+  - [ ] `channel`
+  - [ ] `humidity`
+  - [ ] `open`
+  - [ ] `temperature`
+  - [ ] `volume`
+
+- [ ] `"devices.capabilities.mode"`:
+
+  - [ ] `cleanup_mode`
+  - [ ] `coffee_mode`
+  - [ ] `dishwashing`
+  - [ ] `fan_speed`
+  - [ ] `heat`
+  - [ ] `input_source`
+  - [ ] `program	`
+  - [ ] `swing	`
+  - [ ] `tea_mode	`
+  - [ ] `thermostat	`
+  - [ ] `work_speed`
+
+- [ ] `"devices.capabilities.toggle"`:
+
+  - [ ] `backlight`
+  - [ ] `controls_locked`
+  - [ ] `ionization`
+  - [ ] `keep_warm`
+  - [ ] `mute`
+  - [ ] `oscillation`
+  - [ ] `pause`
+
+- [ ] `"devices.capabilities.video_stream"`:
+
+  - [ ] `get_stream`
+
 ## Todo
 
-- [ ] Better OAuth
+- [x] Better OAuth
 - [ ] More devices and capabilities
 - [ ] Go to 1.0.0
 - [ ] Publish to NPM

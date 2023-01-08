@@ -5,7 +5,7 @@ import {
     CharacteristicValue,
     WithUUID,
 } from "homebridge"
-import { YandexPlatform } from "platform"
+import { YandexPlatform } from "./platform"
 
 export type YandexRequestOK<T> = {
     status: "ok"

@@ -1,10 +1,11 @@
 import http, { IncomingMessage, Server, ServerResponse } from "http"
-import axios from "axios"
+import axios, { Axios, AxiosRequestConfig, AxiosResponse } from "axios"
 
 const FormData = require("form-data")
 
 import path from "path"
 import fs from "fs"
+import ip from "ip"
 
 import {
     API,
@@ -24,6 +25,7 @@ import {
 import { PLUGIN_NAME, PLATFORM_NAME } from "./settings"
 import { Device, YandexRequest, YandexRequestOK } from "./types"
 import { CapabilityManager } from "./capabilities/index"
+import { build } from "./oauth"
 
 function sleep(ms) {
     var start = new Date().getTime(),
@@ -50,102 +52,6 @@ export class YandexPlatform implements DynamicPlatformPlugin {
             "yandex_oauth.json"
         )
 
-        log.info("Example platform finished initializing!")
-
-        /*
-         * When this event is fired, homebridge restored all cached accessories from disk and did call their respective
-         * `configureAccessory` method for all of them. Dynamic Platform plugins should only register new accessories
-         * after this event was fired, in order to ensure they weren't added to homebridge already.
-         * This event can also be used to start discovery of new accessories.
-         */
-        api.on(APIEvent.DID_FINISH_LAUNCHING, () => {
-            this.createYandexAgent()
-        })
-    }
-
-    /*
-     * This function is invoked when homebridge restores cached accessories from disk at startup.
-     * It should be used to setup event handlers for characteristics and update respective values.
-     */
-    async configureAccessory(accessory: PlatformAccessory): Promise<void> {
-        const oauth_content = JSON.parse(
-            fs.readFileSync(this.oauth_path).toString("utf-8")
-        )
-
-        this.log("Configuring accessory %s", accessory.displayName)
-
-        const device = await this.getDevice(accessory.UUID)
-
-        if (device) {
-            new CapabilityManager(this, this.api, accessory, device)
-        }
-
-        accessory.on(PlatformAccessoryEvent.IDENTIFY, () => {
-            this.log("%s identified!", accessory.displayName)
-        })
-
-        this.accessories.push(accessory)
-    }
-
-    // --------------------------- CUSTOM METHODS ---------------------------
-
-    async getDevice(id: string): Promise<YandexRequestOK<Device> | undefined> {
-        const oauth_content = JSON.parse(
-            fs.readFileSync(this.oauth_path).toString("utf-8")
-        )
-
-        const device_info_res = await axios<YandexRequest<Device>>({
-            url: `https://api.iot.yandex.net/v1.0/devices/${id}`,
-            headers: {
-                Authorization: `Bearer ${oauth_content.access_token}`,
-            },
-        })
-
-        if (device_info_res.data.status === "ok") {
-            return device_info_res.data
-        }
-    }
-
-    addAccessory(name: string) {
-        this.log.info("Adding new accessory with name %s", name)
-
-        // uuid must be generated from a unique but not changing data source, name should not be used in the most cases. But works in this specific example.
-        const uuid = this.api.hap.uuid.generate(name)
-        const accessory = new this.api.platformAccessory(name, uuid)
-
-        accessory.addService(this.api.hap.Service.Lightbulb, "Test Light")
-
-        this.configureAccessory(accessory) // abusing the configureAccessory here
-
-        this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [
-            accessory,
-        ])
-    }
-
-    removeAccessories() {
-        // we don't have any special identifiers, we just remove all our accessories
-
-        this.log.info("Removing all accessories")
-
-        this.api.unregisterPlatformAccessories(
-            PLUGIN_NAME,
-            PLATFORM_NAME,
-            this.accessories
-        )
-        this.accessories.splice(0, this.accessories.length) // clear out the array
-    }
-
-    getAccessToken(): string {
-        const oauth_content = JSON.parse(
-            fs.readFileSync(this.oauth_path).toString("utf-8")
-        )
-
-        return oauth_content.access_token
-    }
-
-    async createYandexAgent() {
-        this.log.info(this.oauth_path)
-
         if (!fs.existsSync(this.oauth_path)) {
             fs.writeFileSync(
                 this.oauth_path,
@@ -161,6 +67,82 @@ export class YandexPlatform implements DynamicPlatformPlugin {
             )
         }
 
+        log.info("Example platform finished initializing!")
+
+        /*
+         * When this event is fired, homebridge restored all cached accessories from disk and did call their respective
+         * `configureAccessory` method for all of them. Dynamic Platform plugins should only register new accessories
+         * after this event was fired, in order to ensure they weren't added to homebridge already.
+         * This event can also be used to start discovery of new accessories.
+         */
+        api.on(APIEvent.DID_FINISH_LAUNCHING, () => {
+            build(config.client.id, config.client.secret, this.oauth_path, log)
+            this.createYandexAgent()
+        })
+    }
+
+    /*
+     * This function is invoked when homebridge restores cached accessories from disk at startup.
+     * It should be used to setup event handlers for characteristics and update respective values.
+     */
+    async configureAccessory(accessory: PlatformAccessory): Promise<void> {
+        this.log("Configuring accessory %s", accessory.displayName)
+
+        const device = await this.getDevice(accessory.UUID)
+        if (device) {
+            const cap = new CapabilityManager(this, this.api, accessory, device)
+        }
+
+        accessory.on(PlatformAccessoryEvent.IDENTIFY, () => {
+            this.log("%s identified!", accessory.displayName)
+        })
+
+        this.accessories.push(accessory)
+    }
+
+    // --------------------------- CUSTOM METHODS ---------------------------
+
+    
+
+    getAccessToken(): string {
+        const oauth_content = JSON.parse(
+            fs.readFileSync(this.oauth_path).toString("utf-8")
+        )
+
+        return oauth_content.access_token
+    }
+
+    requestYandexAPI<T>(request: AxiosRequestConfig): Promise<AxiosResponse<YandexRequest<T>>> {
+        const access_token = this.getAccessToken()
+
+        return axios<YandexRequest<T>>({
+            headers: {
+                "Authorization": `Bearer ${access_token}`
+            },
+            ...request
+        }).catch((res) => res.response)
+    } 
+
+    async getDevice(id: string): Promise<YandexRequestOK<Device> | undefined> {
+        const device_info_res = await this.requestYandexAPI<Device>({
+            url: `https://api.iot.yandex.net/v1.0/devices/${id}`
+        })
+
+        if (device_info_res.data.status === "ok") {
+            return device_info_res.data
+        }
+    }
+
+    /*
+     * Creates yandex agent, which:
+     *  - Creates `yandex_oauth.json`
+     *  - Creates interval for refreshing token
+     *  - Creates interval for fetching accessories
+     */
+
+    async createYandexAgent() {
+        this.log.info(this.oauth_path)
+
         const oauth_content = JSON.parse(
             fs.readFileSync(this.oauth_path).toString("utf-8")
         )
@@ -168,7 +150,7 @@ export class YandexPlatform implements DynamicPlatformPlugin {
         await this.refreshToken(oauth_content.refresh_token)
 
         setInterval(() => {
-            this.fetchAccessoriesStatuses()
+            this.fetchAccessories()
         }, this.config.interval)
 
         setInterval(async () => {
@@ -182,22 +164,23 @@ export class YandexPlatform implements DynamicPlatformPlugin {
         }, 1000 * 60 * 60 * 8)
     }
 
-    async fetchAccessoriesStatuses() {
+    /*
+     * Fetch new accessories and create them
+     */
+
+    async fetchAccessories() {
         const oauth_content = JSON.parse(
             fs.readFileSync(this.oauth_path).toString("utf-8")
         )
 
-        const devices_res = await axios({
-            url: "https://api.iot.yandex.net/v1.0/user/info",
-            headers: {
-                Authorization: `Bearer ${oauth_content.access_token}`,
-            },
+        const devices_res = await this.requestYandexAPI<{devices: Device[]}>({
+            url: "https://api.iot.yandex.net/v1.0/user/info"
         })
 
-        if (devices_res.data.status === "ok") {
-            const devices: Device[] = devices_res.data.devices
 
-            for (const device of devices) {
+
+        if (devices_res.data.status === "ok") { 
+            for (const device of devices_res.data.devices) {
                 const accessory = this.accessories.find(
                     (a) => a.UUID === device.id
                 )
@@ -209,35 +192,13 @@ export class YandexPlatform implements DynamicPlatformPlugin {
                         device.id
                     )
 
-                    switch (device.type) {
-                        case "devices.types.light":
-                            accessory.addService(
-                                this.api.hap.Service.Lightbulb,
-                                device.name
-                            )
-                            break
-
-                        case "devices.types.socket":
-                            accessory.addService(
-                                this.api.hap.Service.Outlet,
-                                device.name
-                            )
-                            break
-
-                        default:
-                            break
-                    }
-
                     this.configureAccessory(accessory)
-
                     this.api.registerPlatformAccessories(
                         PLUGIN_NAME,
                         PLATFORM_NAME,
                         [accessory]
                     )
                 }
-
-                device.capabilities[0].last_updated
             }
         }
     }
@@ -261,10 +222,10 @@ export class YandexPlatform implements DynamicPlatformPlugin {
                 ((error) => {
                     this.log.warn("Refresh token expired")
                     this.log.warn(
-                        "Go to this link and fetch access, refresh token and etc.:"
+                        "Go to this link and authorize:"
                     )
                     this.log.warn(
-                        `https://oauth.yandex.ru/authorize?response_type=code&client_id=${this.config.client.id}`
+                        ` > http://${ip.address("private")}:6767/auth`
                     )
                 }).bind(this)
             )

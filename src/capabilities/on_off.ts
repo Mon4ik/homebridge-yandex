@@ -31,23 +31,14 @@ export default class Provider extends BaseProvider {
                 cap.type === "devices.capabilities.on_off" &&
                 cap.state.instance === "on"
         )
-        if (!cap) return 0
 
-        this.yandexPlatform.log.debug(
-            `[${this.device.name}] Getting on_off (${cap.state.value})`
-        )
+        if (!cap) return 0
 
         return +cap.state.value
     }
 
     async set(value: CharacteristicValue) {
-        const token = await this.yandexPlatform.getAccessToken()
-
-        this.yandexPlatform.log.debug(
-            `[${this.device.name}] Setting on_off (${value})`
-        )
-
-        const setting_res = await axios<YandexRequestOK<CapabilityApply>>({
+        this.yandexPlatform.requestYandexAPI({
             url: "https://api.iot.yandex.net/v1.0/devices/actions",
             method: "POST",
             data: {
@@ -65,9 +56,6 @@ export default class Provider extends BaseProvider {
                         ],
                     },
                 ],
-            },
-            headers: {
-                Authorization: `Bearer ${token}`,
             },
         })
     }

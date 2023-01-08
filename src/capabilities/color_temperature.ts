@@ -31,23 +31,18 @@ export default class Provider extends BaseProvider {
         const OldRange = OldMax - OldMin
         const NewRange = 140 - 500
 
-        this.yandexPlatform.log.debug(
-            `[${this.device.name}] Getting color_temperature (y:${cap.state.value})`
-        )
-
         return Math.round(
             (((cap.state.value as number) - OldMin) * NewRange) / OldRange + 500
         )
     }
 
     async set(value: CharacteristicValue) {
-        const token = this.yandexPlatform.getAccessToken()
-
         const cap = this.device.capabilities.find(
             (cap) =>
                 cap.type === "devices.capabilities.color_setting" &&
                 cap.state.instance === "temperature_k"
         )
+        
         if (!cap) return
 
         const NewMin = cap.parameters.temperature_k.min
@@ -59,11 +54,7 @@ export default class Provider extends BaseProvider {
             ((parseInt(value.toString()) - 500) * NewRange) / OldRange + NewMin
         )
 
-        this.yandexPlatform.log.debug(
-            `[${this.device.name}] Setting color_temperature (hb:${value}, y:${NewValue})`
-        )
-
-        await axios({
+        this.yandexPlatform.requestYandexAPI({
             url: "https://api.iot.yandex.net/v1.0/devices/actions",
             method: "POST",
             data: {
@@ -81,12 +72,7 @@ export default class Provider extends BaseProvider {
                         ],
                     },
                 ],
-            },
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-        }).catch((e) => {
-            this.yandexPlatform.log(e.response)
+            }
         })
     }
 }
