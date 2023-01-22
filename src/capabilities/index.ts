@@ -53,39 +53,41 @@ export class CapabilityManager {
 
 
         for (const cap of device.capabilities) {
-            const Provider = caps.find((c) => c.verify(cap, device))?.default
-            if (!Provider) continue
+            const providers = caps.filter((c) => c.verify(cap, device))
+            if (providers.length === 0) continue
 
-            const provider: BaseProvider = new Provider(
-                this.api.hap.Characteristic,
-                this.yandexPlatform,
-                device
-            )
+            for (const Provider of providers) {
+                const provider: BaseProvider = new Provider.default(
+                    this.api.hap.Characteristic,
+                    this.yandexPlatform,
+                    device
+                )
 
-            this.yandexPlatform.log.debug(
-                `[${this.device.name}] Setup characteristic ${
-                    provider.intent().name
-                } for ${service.displayName} service`
-            )
+                this.yandexPlatform.log.debug(
+                    `[${this.device.name}] Setup characteristic ${
+                        provider.intent().name
+                    } for ${service.displayName} service`
+                )
 
-            service
-                .getCharacteristic(provider.intent())
-                .onGet(async () => {
-                    const val = await provider.get.bind(provider)()
+                service
+                    .getCharacteristic(provider.intent())
+                    .onGet(async () => {
+                        const val = await provider.get.bind(provider)()
 
-                    this.yandexPlatform.log.debug(
-                        `[${this.device.name}] [G] ${provider.intent().name} (${val})`
-                    )
+                        this.yandexPlatform.log.debug(
+                            `[${this.device.name}] [G] ${provider.intent().name} (${val})`
+                        )
 
-                    return val
-                })
-                .onSet(async (val) => {
-                    await provider.set.bind(provider)(val)
-                    
-                    this.yandexPlatform.log.debug(
-                        `[${this.device.name}] [S] ${provider.intent().name} (${val})`
-                    )
-                })
+                        return val
+                    })
+                    .onSet(async (val) => {
+                        await provider.set.bind(provider)(val)
+
+                        this.yandexPlatform.log.debug(
+                            `[${this.device.name}] [S] ${provider.intent().name} (${val})`
+                        )
+                    })
+            }
         }
     }
 

@@ -11,7 +11,7 @@ export function build(client_id: string, client_secret: string, oauth_path: stri
 	app.get("/", (req, res) => {
 		res.send(`
 			<h1>Looks like you are lost</h1>
-			<button href="/auth">Authorize via YandexID</button>
+			<a href="/auth">Authorize via YandexID</a>
 		`)
 	})
 

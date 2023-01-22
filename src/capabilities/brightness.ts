@@ -1,6 +1,6 @@
 import axios from "axios"
 import { CharacteristicValue, Characteristic } from "homebridge"
-import { BaseProvider, Capability, Device } from "../types"
+import {BaseProvider, Capability, Device, StateBrightness} from "../types"
 
 export function verify(cap: Capability, device: Device) {
     return (
@@ -25,7 +25,7 @@ export default class Provider extends BaseProvider {
         )
         if (!cap) return 100
 
-        return Math.round(cap.state.value as number)
+        return Math.round((cap.state as StateBrightness).value)
     }
 
     async set(value: CharacteristicValue) {
@@ -40,7 +40,7 @@ export default class Provider extends BaseProvider {
 
         const new_value = Math.round(parseInt(value.toString()))
 
-        this.yandexPlatform.requestYandexAPI({
+        await this.yandexPlatform.requestYandexAPI({
             url: "https://api.iot.yandex.net/v1.0/devices/actions",
             method: "POST",
             data: {

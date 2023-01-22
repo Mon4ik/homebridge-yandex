@@ -43,9 +43,9 @@ homebridge -D
 ## Authorization
 
 1. Create app in Yandex API at [https://oauth.yandex.ru/client/new](https://oauth.yandex.ru/client/new)
-   1. Enter any name
-   2. Select platform `Web services` (first)
-   3. Select all data with IoT (`iot:view`, `iot:control`)
+    1. Enter any name
+    2. Select platform `Web services` (first)
+    3. Select all data with IoT (`iot:view`, `iot:control`)
 2. Set redirect URL to: `http://<there's ip>:6767/auth/callback`
 3. Then start Homebridge server and go to url and authorize with your YandexID: `http://<there's ip>:6767/auth`
 
@@ -83,51 +83,51 @@ homebridge -D
 
 - [x] `"devices.capabilities.on_off"`:
 
-  - [x] `on`
+    - [x] `on`
 
 - [ ] `"devices.capabilities.color_setting"`:
 
-  - [x] `temperature_k`
-  - [ ] `hsv`
-  - [ ] `rgb`
-  - [ ] `scene`
+    - [x] `temperature_k`
+    - [x] `hsv`
+    - [ ] `rgb`
+    - [ ] `scene`
 
 - [ ] `"devices.capabilities.range"`:
 
-  - [x] `brightness`
-  - [ ] `channel`
-  - [ ] `humidity`
-  - [ ] `open`
-  - [ ] `temperature`
-  - [ ] `volume`
+    - [x] `brightness`
+    - [ ] `channel`
+    - [ ] `humidity`
+    - [ ] `open`
+    - [ ] `temperature`
+    - [ ] `volume`
 
 - [ ] `"devices.capabilities.mode"`:
 
-  - [ ] `cleanup_mode`
-  - [ ] `coffee_mode`
-  - [ ] `dishwashing`
-  - [ ] `fan_speed`
-  - [ ] `heat`
-  - [ ] `input_source`
-  - [ ] `program	`
-  - [ ] `swing	`
-  - [ ] `tea_mode	`
-  - [ ] `thermostat	`
-  - [ ] `work_speed`
+    - [ ] `cleanup_mode`
+    - [ ] `coffee_mode`
+    - [ ] `dishwashing`
+    - [ ] `fan_speed`
+    - [ ] `heat`
+    - [ ] `input_source`
+    - [ ] `program    `
+    - [ ] `swing    `
+    - [ ] `tea_mode    `
+    - [ ] `thermostat    `
+    - [ ] `work_speed`
 
 - [ ] `"devices.capabilities.toggle"`:
 
-  - [ ] `backlight`
-  - [ ] `controls_locked`
-  - [ ] `ionization`
-  - [ ] `keep_warm`
-  - [ ] `mute`
-  - [ ] `oscillation`
-  - [ ] `pause`
+    - [ ] `backlight`
+    - [ ] `controls_locked`
+    - [ ] `ionization`
+    - [ ] `keep_warm`
+    - [ ] `mute`
+    - [ ] `oscillation`
+    - [ ] `pause`
 
 - [ ] `"devices.capabilities.video_stream"`:
 
-  - [ ] `get_stream`
+    - [ ] `get_stream`
 
 ## Todo
 

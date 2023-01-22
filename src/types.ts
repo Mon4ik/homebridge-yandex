@@ -20,15 +20,38 @@ export type YandexRequestBAD = {
 
 export type YandexRequest<T> = YandexRequestOK<T> | YandexRequestBAD
 
-export type Capability = {
+export type StateHSV = {
+    instance: "hsv",
+    value: {
+        h: number
+        s: number
+        v: number
+    }
+}
+
+export type StateBrightness = {
+    instance: "brightness",
+    value: number
+}
+
+export type StateOn = {
+    instance: "on",
+    value: boolean
+}
+
+export type StateTemperatureK = {
+    instance: "temperature_k",
+    value: number
+}
+
+export type State = StateHSV | StateBrightness | StateOn | StateTemperatureK
+
+export type Capability<S = State> = {
     reportable: boolean
     retrievable: boolean
     type: string
     parameters: Record<string, any>
-    state: {
-        instance: string
-        value: boolean | number
-    }
+    state: S
     last_updated: number
 }
 
@@ -42,7 +65,7 @@ export type Device = {
     household_id: string
     room: string
     groups: string[]
-    capabilities: Capability[]
+    capabilities: Capability<State>[]
     properties: []
 }
 

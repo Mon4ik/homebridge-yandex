@@ -1,11 +1,13 @@
 import axios from "axios"
 import { CharacteristicValue, Characteristic } from "homebridge"
-import { BaseProvider, Capability, Device } from "../types"
+import {BaseProvider, Capability, Device, StateTemperatureK} from "../types"
 
 export function verify(cap: Capability, device: Device) {
+    console.log(device.capabilities.map((c) => c?.state?.instance))
     return (
         cap.type === "devices.capabilities.color_setting" &&
-        cap.state.instance === "temperature_k"
+        cap.state.instance === "temperature_k" &&
+        cap.parameters.color_model !== "hsv"
     )
 }
 
@@ -22,7 +24,7 @@ export default class Provider extends BaseProvider {
             (cap) =>
                 cap.type === "devices.capabilities.color_setting" &&
                 cap.state.instance === "temperature_k"
-        )
+        ) as Capability<StateTemperatureK> | undefined
         if (!cap) return 140
 
         const OldMin = cap.parameters.temperature_k.min
@@ -32,7 +34,7 @@ export default class Provider extends BaseProvider {
         const NewRange = 140 - 500
 
         return Math.round(
-            (((cap.state.value as number) - OldMin) * NewRange) / OldRange + 500
+            ((cap.state.value - OldMin) * NewRange) / OldRange + 500
         )
     }
 
