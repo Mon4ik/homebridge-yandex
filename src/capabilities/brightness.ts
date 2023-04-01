@@ -40,25 +40,18 @@ export default class Provider extends BaseProvider {
 
         const new_value = Math.round(parseInt(value.toString()))
 
-        await this.yandexPlatform.requestYandexAPI({
-            url: "https://api.iot.yandex.net/v1.0/devices/actions",
-            method: "POST",
-            data: {
-                devices: [
-                    {
-                        id: this.device.id,
-                        actions: [
-                            {
-                                type: "devices.capabilities.range",
-                                state: {
-                                    instance: "brightness",
-                                    value: new_value,
-                                },
-                            },
-                        ],
+
+        this.yandexPlatform.addAction({
+            id: this.device.id,
+            actions: [
+                {
+                    type: "devices.capabilities.range",
+                    state: {
+                        instance: "brightness",
+                        value: new_value,
                     },
-                ],
-            }
+                },
+            ],
         })
     }
 }

@@ -56,25 +56,17 @@ export default class Provider extends BaseProvider {
             ((parseInt(value.toString()) - 500) * NewRange) / OldRange + NewMin
         )
 
-        this.yandexPlatform.requestYandexAPI({
-            url: "https://api.iot.yandex.net/v1.0/devices/actions",
-            method: "POST",
-            data: {
-                devices: [
-                    {
-                        id: this.device.id,
-                        actions: [
-                            {
-                                type: "devices.capabilities.color_setting",
-                                state: {
-                                    instance: "temperature_k",
-                                    value: NewValue,
-                                },
-                            },
-                        ],
+        this.yandexPlatform.addAction({
+            id: this.device.id,
+            actions: [
+                {
+                    type: "devices.capabilities.color_setting",
+                    state: {
+                        instance: "temperature_k",
+                        value: NewValue,
                     },
-                ],
-            }
+                },
+            ],
         })
     }
 }

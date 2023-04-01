@@ -1,10 +1,8 @@
 <p align="center">
-
-<img src="https://github.com/homebridge/branding/raw/master/logos/homebridge-wordmark-logo-vertical.png" width="150">
-
+<img src="https://github.com/homebridge/branding/raw/master/logos/homebridge-wordmark-logo-vertical.png" width="150" alt="HOMEBRIDGE">
 </p>
 
-> Plugin is in ALPHA, so it works very bad
+> Plugin is in ~~ALPHA~~ BETA, so it works ~~very~~ bad
 
 # Homebridge Yandex
 
@@ -12,44 +10,56 @@ Homebridge plugin for Yandex Home
 
 ## Installation
 
-> NPM in future, sorry :(
+### NPM
 
-## Build
-
-### Install dependencies
-
-```
-npm install
+```shell
+npm i homebridge-yandex@beta
 ```
 
-### Build Plugin
+### Build yourself
 
-```
-npm run build
-```
+1. Install dependencies
+    ```shell
+    npm install
+    ```
 
-### Link To Homebridge
+2. Build Plugin
+    ```shell
+    npm run build
+    ```
 
-```
-npm link
-```
+3. Link To Homebridge
+    ```shell
+    npm link
+    ```
 
-### Start Homebridge
+4. Start Homebridge
+    ```shell 
+    homebridge -D
+    ```
 
-```
-homebridge -D
-```
-
-## Authorization
+## Setup
 
 1. Create app in Yandex API at [https://oauth.yandex.ru/client/new](https://oauth.yandex.ru/client/new)
     1. Enter any name
     2. Select platform `Web services` (first)
     3. Select all data with IoT (`iot:view`, `iot:control`)
-2. Set redirect URL to: `http://<there's ip>:6767/auth/callback`
-3. Then start Homebridge server and go to url and authorize with your YandexID: `http://<there's ip>:6767/auth`
+2. Set Client ID and Client Secret in `config.json`:
+    ```json
+    {
+      "name": "Yandex SmartHome",
+      "platform": "HomebridgeYandex",
+      "client": {
+        "id": "set there client id (from yandex oauth)",
+        "secret": "set there client secret (from yandex oauth)"
+      },
+      "interval": 20000
+    }
+    ```
+3. Set redirect URL to: `http://<server ip>:6767/auth/callback`
+4. Then start Homebridge server and go to url and authorize with your YandexID: `http://<server ip>:6767/auth`
 
-## Support list
+## Current Support list
 
 ### Devices:
 
@@ -88,7 +98,7 @@ homebridge -D
 - [ ] `"devices.capabilities.color_setting"`:
 
     - [x] `temperature_k`
-    - [x] `hsv`
+    - [x] `hsv` (currently works so-so)
     - [ ] `rgb`
     - [ ] `scene`
 
@@ -132,6 +142,7 @@ homebridge -D
 ## Todo
 
 - [x] Better OAuth
+- [X] Publish to NPM (BETA)
 - [ ] More devices and capabilities
 - [ ] Go to 1.0.0
 - [ ] Publish to NPM

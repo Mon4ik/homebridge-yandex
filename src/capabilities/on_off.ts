@@ -4,10 +4,7 @@ import { YandexPlatform } from "../platform"
 import {
     BaseProvider,
     Capability,
-    CapabilityApply,
-    Device,
-    IProvider,
-    YandexRequestOK,
+    Device
 } from "../types"
 
 export function verify(cap: Capability, device: Device) {
@@ -38,25 +35,17 @@ export default class Provider extends BaseProvider {
     }
 
     async set(value: CharacteristicValue) {
-        this.yandexPlatform.requestYandexAPI({
-            url: "https://api.iot.yandex.net/v1.0/devices/actions",
-            method: "POST",
-            data: {
-                devices: [
-                    {
-                        id: this.device.id,
-                        actions: [
-                            {
-                                type: "devices.capabilities.on_off",
-                                state: {
-                                    instance: "on",
-                                    value: value.toString() === "true",
-                                },
-                            },
-                        ],
+        this.yandexPlatform.addAction({
+            id: this.device.id,
+            actions: [
+                {
+                    type: "devices.capabilities.on_off",
+                    state: {
+                        instance: "on",
+                        value: value.toString() === "true",
                     },
-                ],
-            },
+                },
+            ],
         })
     }
 }

@@ -7,8 +7,6 @@ import path from "path"
 import { API, PlatformAccessory, Service } from "homebridge"
 import {
     BaseProvider,
-    Capability,
-    CapabilityApply,
     Device,
     YandexRequestOK,
 } from "../types"
@@ -53,14 +51,15 @@ export class CapabilityManager {
 
 
         for (const cap of device.capabilities) {
-            const providers = caps.filter((c) => c.verify(cap, device))
+            const providers: (typeof BaseProvider)[] = caps.filter((c) => c.verify(cap, device)).map((p) => p.default)
             if (providers.length === 0) continue
 
             for (const Provider of providers) {
-                const provider: BaseProvider = new Provider.default(
+                const provider: BaseProvider = new Provider(
                     this.api.hap.Characteristic,
                     this.yandexPlatform,
-                    device
+                    device,
+                    this.accessory
                 )
 
                 this.yandexPlatform.log.debug(

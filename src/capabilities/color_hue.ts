@@ -1,4 +1,5 @@
-import {kelvin2rgb, rgb2hsv} from "../utils";
+import {color2kelvin, HSVtoRGB} from "../utils";
+import chroma, {Color} from "chroma-js";
 import {CharacteristicValue, Characteristic} from "homebridge"
 import {BaseProvider, Capability, Device, StateBrightness, StateHSV, StateTemperatureK} from "../types"
 
@@ -22,9 +23,8 @@ export default class Provider extends BaseProvider {
 		if (!cap) return 0
 
 		if (cap.state.instance === "temperature_k") {
-			const [r, g, b] = kelvin2rgb(cap.state.value)
-			const hsv = rgb2hsv(r, g, b)
-			return Math.round(hsv.h)
+			const [h, s, v] = chroma.temperature(cap.state.value).hsv()
+			return Math.round(h)
 		} else {
 			return Math.round(cap.state.value.h)
 		}
@@ -32,41 +32,54 @@ export default class Provider extends BaseProvider {
 	}
 
 	async set(value: CharacteristicValue) {
-		const cap = this.device.capabilities.find(verify) as Capability<StateHSV | StateTemperatureK> | undefined
+		const device = await this.yandexPlatform.getDevice(this.device.id)
+		if (!device) return
+
+		const cap = device.capabilities.find(verify) as Capability<StateHSV | StateTemperatureK> | undefined
 		if (!cap) return
 
-		let hsv
-		if (cap.state.instance === "hsv") {
-			hsv = cap.state.value
-		} else {
-			const [r, g, b] = kelvin2rgb(cap.state.value)
-			const _hsv = rgb2hsv(r, g, b)
-			hsv = {h: _hsv.h, s: Math.floor(_hsv.s), v: Math.floor(_hsv.v)}
-		}
+		const saturation = this.accessory
+			.getService(this.yandexPlatform.api.hap.Service.Lightbulb)
+			?.getCharacteristic(this.characteristic.Saturation).value as number
 
-		await this.yandexPlatform.requestYandexAPI({
-			url: "https://api.iot.yandex.net/v1.0/devices/actions",
-			method: "POST",
-			data: {
-				devices: [
+		const color = chroma(HSVtoRGB(parseInt(value.toString()) / 360, saturation / 100, 1))
+
+		const kelvin = color2kelvin(color, cap.parameters.temperature_k.min, cap.parameters.temperature_k.max)
+
+		console.log(color, kelvin)
+
+		if (kelvin > -1) {
+			this.yandexPlatform.addAction({
+				id: this.device.id,
+				actions: [
 					{
-						id: this.device.id,
-						actions: [
-							{
-								type: "devices.capabilities.color_setting",
-								state: {
-									instance: "hsv",
-									value: {
-										h: parseInt(value as string),
-										s: hsv.s,
-										v: hsv.v
-									},
-								},
-							},
-						],
+						type: "devices.capabilities.color_setting",
+						state: {
+							instance: "temperature_k",
+							value: kelvin,
+						},
 					},
 				],
-			}
-		})
+			})
+		} else {
+			this.yandexPlatform.addAction({
+				id: this.device.id,
+				actions: [
+					{
+						type: "devices.capabilities.color_setting",
+						state: {
+							instance: "hsv",
+							value: {
+								h: Math.floor(color.hsv()[0]),
+								s: Math.floor(color.hsv()[1] * 100),
+								v: Math.floor(color.hsv()[2] * 100),
+							},
+						},
+					},
+				],
+			})
+		}
+
+
 	}
 }

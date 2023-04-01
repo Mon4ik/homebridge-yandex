@@ -1,4 +1,6 @@
-export function kelvin2rgb(temp: number): number[] {
+import chroma, { Color } from "chroma-js";
+
+export function kelvin2rgb(temp) {
 	temp = temp / 100
 	let red, blue, green
 
@@ -55,6 +57,25 @@ export function kelvin2rgb(temp: number): number[] {
 	return [red, green, blue].map(Math.floor)
 }
 
+export function color2kelvin(clr: Color, min_K: number, max_K:number, max_dist=25) {
+	let t = min_K
+	let t_match = -1
+	let dist = max_dist
+
+	while (t <= max_K) {
+		const _dist = chroma.distance(clr, chroma.temperature(t))
+		if (_dist < dist) {
+			dist = _dist
+			t_match = t
+		}
+		t++
+	}
+
+	return t_match
+}
+
+
+
 export function rgb2hsv(r: number, g: number, b: number) {
 	let rabs, gabs, babs, rr, gg, bb, h, s, v, diff, diffc, percentRoundFn
 	rabs = r / 255
@@ -91,4 +112,22 @@ export function rgb2hsv(r: number, g: number, b: number) {
 		s: percentRoundFn(s * 100),
 		v: percentRoundFn(v * 100)
 	}
+}
+
+export function HSVtoRGB(h: number, s: number, v: number) {
+	var r, g, b, i, f, p, q, t;
+	i = Math.floor(h * 6);
+	f = h * 6 - i;
+	p = v * (1 - s);
+	q = v * (1 - f * s);
+	t = v * (1 - (1 - f) * s);
+	switch (i % 6) {
+		case 0: r = v, g = t, b = p; break;
+		case 1: r = q, g = v, b = p; break;
+		case 2: r = p, g = v, b = t; break;
+		case 3: r = p, g = q, b = v; break;
+		case 4: r = t, g = p, b = v; break;
+		case 5: r = v, g = p, b = q; break;
+	}
+	return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
 }

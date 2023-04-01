@@ -18,6 +18,13 @@
                 "default": 20000,
                 "required": true
             },
+            "action_timeout": {
+                "title": "Action applying timeout",
+                "description": "Timeout in ms (Recommended value: 1000ms)",
+                "type": "number",
+                "default": 1200,
+                "required": true
+            },
             "client": {
                 "title": "Authorization",
                 "type": "object",
