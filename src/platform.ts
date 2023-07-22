@@ -223,8 +223,8 @@ export class YandexPlatform implements DynamicPlatformPlugin {
 			url: "https://api.iot.yandex.net/v1.0/user/info"
 		})
 
-
-		if (devices_res.data.status === "ok") {
+		// Checking that its not null in case if requests failes and no data recieved, so it would be ignored
+		if (devices_res !== null && devices_res !== undefined && devices_res.data.status === "ok") {
 			for (const device of devices_res.data.devices) {
 				const accessory = this.accessories.find(
 					(a) => a.UUID === device.id
