@@ -116,7 +116,15 @@ export class CapabilityManager {
                 }
                 break
             default:
-                throw Error(`Device "${this.device.name}" isn't supporting`)
+                this.yandexPlatform.log.warn(`Device "${this.device.name}" isn't supporting (type: ${this.device.type})`)
+
+                service = this.accessory.getService(this.api.hap.Service.Switch)
+
+                if (!service) {
+                    service = this.accessory.addService(
+                        this.api.hap.Service.Switch
+                    )
+                }
                 break
         }
 

@@ -22,7 +22,7 @@
                 "title": "Action applying timeout",
                 "description": "Timeout in ms (Recommended value: 1000ms)",
                 "type": "number",
-                "default": 1200,
+                "default": 800,
                 "required": true
             },
             "client": {

@@ -59,6 +59,10 @@ npm i homebridge-yandex@beta
 3. Set redirect URL to: `http://<server ip>:6767/auth/callback`
 4. Then start Homebridge server and go to url and authorize with your YandexID: `http://<server ip>:6767/auth`
 
+## Known issues
+- When light is RGB and saturation capable, and you set white, the light will be dim
+- With Docker doesn't work init devices (???) 
+
 ## Current Support list
 
 ### Devices:

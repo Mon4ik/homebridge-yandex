@@ -265,7 +265,7 @@ export class YandexPlatform implements DynamicPlatformPlugin {
 			})
 			.catch(
 				((error) => {
-					this.log.warn("Refresh token expired")
+					this.log.error("Refresh token expired")
 					this.log.warn(
 						"Go to this link and authorize:"
 					)
