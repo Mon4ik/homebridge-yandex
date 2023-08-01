@@ -2,7 +2,9 @@
 <img src="https://github.com/homebridge/branding/raw/master/logos/homebridge-wordmark-logo-vertical.png" width="150" alt="HOMEBRIDGE">
 </p>
 
-> Plugin is in ~~ALPHA~~ BETA, so it works ~~very~~ bad
+> **Warning**
+>
+> Plugin is in **BETA**, so it can contain bugs
 
 # Homebridge Yandex
 
@@ -13,7 +15,7 @@ Homebridge plugin for Yandex Home
 ### NPM
 
 ```shell
-npm i homebridge-yandex@beta
+npm i homebridge-yandex
 ```
 
 ### Build yourself
@@ -49,11 +51,12 @@ npm i homebridge-yandex@beta
     {
       "name": "Yandex SmartHome",
       "platform": "HomebridgeYandex",
+      "interval": 20000,
+      "action_timeout": 1500,
       "client": {
-        "id": "set there client id (from yandex oauth)",
-        "secret": "set there client secret (from yandex oauth)"
-      },
-      "interval": 20000
+        "id": "<CLIENT ID>",
+        "secret": "<CLIENT SECRET>"
+      }
     }
     ```
 3. Set redirect URL to: `http://<server ip>:6767/auth/callback`

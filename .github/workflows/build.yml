@@ -1,0 +1,22 @@
+name: Build project
+
+on:
+  push:
+    paths-ignore:
+      - 'README.md'
+      - 'LICENSE'
+  pull_request:
+    paths-ignore:
+      - 'README.md'
+      - 'LICENSE'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '18.x'
+      - run: yarn
+      - run: yarn build
