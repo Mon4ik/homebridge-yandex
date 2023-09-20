@@ -28,9 +28,8 @@ export class AdapterApplier {
 		const device = await this.yandexPlatform.yandexAPI.getDevice(this.device.id)
 		if (!device) return
 
-		console.log(__dirname)
-		const caps = glob("./dist/adapters/*.js", {
-			ignore: "./dist/adapters/index.js",
+		const caps = glob(path.join(__dirname, "*.js"), {
+			ignore: path.join(__dirname, "index.js"),
 		}).map((f) => {
 			return require(`./${path.basename(f)}`)
 		})

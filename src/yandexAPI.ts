@@ -1,5 +1,5 @@
 import fs from "fs";
-import axios, {AxiosRequestConfig, AxiosResponse} from "axios/index";
+import axios, {AxiosRequestConfig, AxiosResponse} from "axios";
 import {ActionsDevice, Device, YandexRequest, YandexRequestOK} from "./types";
 import _ from "lodash";
 import {Logging, PlatformConfig} from "homebridge";
