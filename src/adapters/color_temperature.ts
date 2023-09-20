@@ -1,6 +1,6 @@
 import axios from "axios"
 import { CharacteristicValue, Characteristic } from "homebridge"
-import {BaseProvider, Capability, Device, StateTemperatureK} from "../types"
+import {Adapter, Capability, Device, StateTemperatureK} from "../types"
 
 export function verify(cap: Capability, device: Device) {
     console.log(device.capabilities.map((c) => c?.state?.instance))
@@ -11,13 +11,13 @@ export function verify(cap: Capability, device: Device) {
     )
 }
 
-export default class Provider extends BaseProvider {
+export default class Provider extends Adapter {
     intent() {
         return this.characteristic.ColorTemperature
     }
 
     async get() {
-        const device = await this.yandexPlatform.getDevice(this.device.id)
+        const device = await this.getLatestDevice()
         if (!device) return 140
 
         const cap = device.capabilities.find(
@@ -56,7 +56,7 @@ export default class Provider extends BaseProvider {
             ((parseInt(value.toString()) - 500) * NewRange) / OldRange + NewMin
         )
 
-        this.yandexPlatform.addAction({
+        this.yandexAPI.addAction({
             id: this.device.id,
             actions: [
                 {

@@ -117,7 +117,10 @@ web_modules/
 
 # yarn v2
 
-.yarn/cache
-.yarn/unplugged
-.yarn/build-state.yml
 .pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions

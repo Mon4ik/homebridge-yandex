@@ -9,6 +9,7 @@ import {Characteristic} from "hap-nodejs";
 
 
 import {YandexPlatform} from "./platform"
+import {YandexAPI} from "./yandexAPI";
 
 export type YandexRequestOK<T> = {
 	status: "ok"
@@ -92,7 +93,7 @@ export type ActionsDeviceResult = {
 	}[]
 }
 
-export class BaseProvider implements IProvider {
+export abstract class Adapter {
 	// readonly intent: Characteristic
 	// readonly yandexPlatform: YandexPlatform
 	// readonly device: Device
@@ -100,35 +101,39 @@ export class BaseProvider implements IProvider {
 	constructor(
 		readonly characteristic: typeof Characteristic,
 		readonly yandexPlatform: YandexPlatform,
+		readonly yandexAPI: YandexAPI,
 		readonly device: Device,
 		readonly accessory: PlatformAccessory
-	) {}
-
-	intent(): WithUUID<new () => Characteristic> {
-		return this.characteristic.On
+	) {
 	}
 
-	async get() {
-		return 0
+	getLatestDevice() {
+		return this.yandexAPI.getDevice(this.device.id)
 	}
 
-	async set(value) {
-	}
+	/** Apple's Home Characteristic (Brightness, Color, etc.) */
+	abstract intent(): WithUUID<new () => Characteristic>
+
+	/** Get value for characteristic for Apple's Home from Yandex Home */
+	abstract get(): Promise<number>
+
+	/** Set new value for characteristic for Yandex Home (set from Apple's Home) */
+	abstract set(value: CharacteristicValue): Promise<void>
 }
 
-export interface IProvider {
-	readonly characteristic: any
-	readonly yandexPlatform: YandexPlatform
-	readonly device: Device
-
-	// constructor(
-	//     intent: Characteristic,
-	//     yandexPlatform: YandexPlatform,
-	//     device: Device
-	// ): void
-
-	intent(): new () => Characteristic
-
-	get: CharacteristicGetHandler
-	set: CharacteristicSetHandler
-}
+// export interface IProvider {
+// 	readonly characteristic: any
+// 	readonly yandexPlatform: YandexPlatform
+// 	readonly device: Device
+//
+// 	// constructor(
+// 	//     intent: Characteristic,
+// 	//     yandexPlatform: YandexPlatform,
+// 	//     device: Device
+// 	// ): void
+//
+// 	intent(): new () => Characteristic
+//
+// 	get: CharacteristicGetHandler
+// 	set: CharacteristicSetHandler
+// }

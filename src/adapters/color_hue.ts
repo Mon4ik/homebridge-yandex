@@ -1,8 +1,9 @@
-import axios from "axios";
-import {CharacteristicValue, Characteristic} from "homebridge"
-import {BaseProvider, Capability, Device, StateBrightness, StateHSV, StateTemperatureK} from "../types"
-import {color2kelvin, HSVtoRGB, kelvin2rgb, rgb2hsv} from "../utils";
+import {color2kelvin, HSVtoRGB} from "../utils";
 import chroma, {Color} from "chroma-js";
+import {CharacteristicValue, Characteristic} from "homebridge"
+import {
+	Adapter, Capability, Device, StateBrightness, StateHSV, StateTemperatureK
+} from "../types"
 
 export function verify(cap: Capability) {
 	return (
@@ -11,13 +12,13 @@ export function verify(cap: Capability) {
 	)
 }
 
-export default class Provider extends BaseProvider {
+export default class Provider extends Adapter {
 	intent() {
-		return this.characteristic.Saturation
+		return this.characteristic.Hue
 	}
 
 	async get() {
-		const device = await this.yandexPlatform.getDevice(this.device.id)
+		const device = await this.getLatestDevice()
 		if (!device) return 0
 
 		const cap = device.capabilities.find(verify) as Capability<StateHSV | StateTemperatureK> | undefined
@@ -25,30 +26,30 @@ export default class Provider extends BaseProvider {
 
 		if (cap.state.instance === "temperature_k") {
 			const [h, s, v] = chroma.temperature(cap.state.value).hsv()
-			return Math.round(s * 100)
+			return Math.round(h)
 		} else {
-			return Math.round(cap.state.value.s)
+			return Math.round(cap.state.value.h)
 		}
+
 	}
 
 	async set(value: CharacteristicValue) {
-		const device = await this.yandexPlatform.getDevice(this.device.id)
+		const device = await this.getLatestDevice()
 		if (!device) return
 
 		const cap = device.capabilities.find(verify) as Capability<StateHSV | StateTemperatureK> | undefined
 		if (!cap) return
 
-		let hue = this.accessory
+		const saturation = this.accessory
 			.getService(this.yandexPlatform.api.hap.Service.Lightbulb)
-			?.getCharacteristic(this.characteristic.Hue).value as number
+			?.getCharacteristic(this.characteristic.Saturation).value as number
 
-		const color = chroma(HSVtoRGB(hue / 100, parseInt(value.toString()) / 100, 1))
+		const color = chroma(HSVtoRGB(parseInt(value.toString()) / 360, saturation / 100, 1))
+
 		const kelvin = color2kelvin(color, cap.parameters.temperature_k.min, cap.parameters.temperature_k.max)
 
-		console.log(color, kelvin)
-
 		if (kelvin > -1) {
-			this.yandexPlatform.addAction({
+			this.yandexAPI.addAction({
 				id: this.device.id,
 				actions: [
 					{
@@ -61,7 +62,7 @@ export default class Provider extends BaseProvider {
 				],
 			})
 		} else {
-			this.yandexPlatform.addAction({
+			this.yandexAPI.addAction({
 				id: this.device.id,
 				actions: [
 					{
@@ -69,8 +70,8 @@ export default class Provider extends BaseProvider {
 						state: {
 							instance: "hsv",
 							value: {
-								h: Math.round(color.hsv()[0]),
-								s: Math.round(color.hsv()[1] * 100),
+								h: Math.floor(color.hsv()[0]),
+								s: Math.floor(color.hsv()[1] * 100),
 								v: Math.floor(color.hsv()[2] * 100),
 							},
 						},
@@ -78,5 +79,7 @@ export default class Provider extends BaseProvider {
 				],
 			})
 		}
+
+
 	}
 }
