@@ -1,10 +1,6 @@
-<p align="center">
-<img src="https://github.com/homebridge/branding/raw/master/logos/homebridge-wordmark-logo-vertical.png" width="150" alt="HOMEBRIDGE">
-</p>
-
 > **Warning**
 >
-> Plugin is in **BETA**, so it can contain bugs
+> Репозиторий в архиве. НО есть  перезапущенная версия: [Mon4ik/yandex-homekit](https://github.com/Mon4ik/yandex-homekit)  
 
 # Homebridge Yandex
 
